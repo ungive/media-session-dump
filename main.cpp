@@ -1,24 +1,11 @@
 #include <iostream>
 
 #include <Windows.h>
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.ApplicationModel.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Media.Control.h>
-#include <winrt/Windows.System.h>
-#include <winrt/Windows.Storage.h>
-#include <winrt/Windows.Storage.Streams.h>
-#include <winrt/Windows.Foundation.Collections.h>
-#include <DispatcherQueue.h>
 
-using namespace winrt;
 using namespace winrt::Windows::Foundation;
-using namespace winrt::Windows::Foundation::Collections;
 using namespace winrt::Windows::Media::Control;
-using namespace winrt::Windows::Media;
-using namespace winrt::Windows::System;
-using namespace winrt::Windows::Storage::Streams;
-
 using namespace std::chrono_literals;
 
 #define INTERVAL 1s
