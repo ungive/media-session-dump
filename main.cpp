@@ -17,6 +17,7 @@ std::string represent(winrt::hstring const&);
 
 int main()
 {
+    SetConsoleOutputCP(CP_UTF8);
     auto action = observe_async();
     action.get();
 }
