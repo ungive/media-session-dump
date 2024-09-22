@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 
 #include <Windows.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -30,6 +31,12 @@ IAsyncAction observe_async()
     }
 }
 
+template<typename R, typename P>
+inline std::chrono::milliseconds to_millis(std::chrono::duration<R, P> value)
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(value);
+}
+
 IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManager& manager)
 {
     for (auto session : manager.GetSessions()) {
@@ -42,10 +49,16 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
                 << winrt::to_string(err.message()) << std::endl;
             continue;
         }
-        std::cout << "player: " << represent(session.SourceAppUserModelId()) << std::endl;
-        std::cout << "title:  " << represent(properties.Title()) << std::endl;
-        std::cout << "artist: " << represent(properties.Artist()) << std::endl;
-        std::cout << "album:  " << represent(properties.AlbumTitle()) << std::endl;
+        std::cout << "player:   " << represent(session.SourceAppUserModelId()) << std::endl;
+        std::cout << "title:    " << represent(properties.Title()) << std::endl;
+        std::cout << "artist:   " << represent(properties.Artist()) << std::endl;
+        std::cout << "album:    " << represent(properties.AlbumTitle()) << std::endl;
+        auto timeline_properties = session.GetTimelineProperties();
+        auto position = to_millis(timeline_properties.Position());
+        auto position_timestamp = to_millis(winrt::clock::to_sys(timeline_properties.LastUpdatedTime()).time_since_epoch());
+        auto duration = to_millis(timeline_properties.EndTime() - timeline_properties.StartTime());
+        std::cout << "position: " << position << " (" << position_timestamp << ")" << std::endl;
+        std::cout << "duration: " << duration << std::endl;
         std::cout << std::endl;
     }
     co_return;
