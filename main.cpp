@@ -62,7 +62,10 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
         auto duration = to_millis(timeline_properties.EndTime() - timeline_properties.StartTime());
         std::cout << "Position: " << position << std::endl;
         std::cout << "LastUpdatedTime: " << position_timestamp << std::endl;
-        std::cout << "Duration (EndTime - StartTime): " << duration << std::endl;
+        std::cout << "EndTime - StartTime (duration): " << duration << std::endl;
+        std::cout << "MinSeekTime: " << to_millis(timeline_properties.MinSeekTime()) << std::endl;
+        std::cout << "MaxSeekTime: " << to_millis(timeline_properties.MaxSeekTime()) << std::endl;
+        std::cout << "MaxSeekTime - MinSeekTime: " << to_millis(timeline_properties.MaxSeekTime() - timeline_properties.MinSeekTime()) << std::endl;
         std::cout << "TrackNumber: " << properties.TrackNumber() << std::endl;
         std::cout << "AlbumTrackCount: " << properties.AlbumTrackCount() << std::endl;
         std::cout << std::endl;
