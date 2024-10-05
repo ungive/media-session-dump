@@ -55,6 +55,7 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
         std::cout << "Subtitle: " << represent(properties.Subtitle()) << std::endl;
         std::cout << "Artist: " << represent(properties.Artist()) << std::endl;
         std::cout << "AlbumTitle: " << represent(properties.AlbumTitle()) << std::endl;
+        std::cout << "AlbumArtist: " << represent(properties.AlbumArtist()) << std::endl;
         std::cout << "Genres: "; for (auto const& genre : properties.Genres()) std::cout << represent(genre) << ", "; std::cout << std::endl;
         auto timeline_properties = session.GetTimelineProperties();
         auto position = to_millis(timeline_properties.Position());
