@@ -23,10 +23,10 @@
     ],
     "buildPresets": [
         {
-            "name": "windows-msvc-debug",
-            "displayName": "Visual Studio Build Tools 2022 Release - amd64 - Debug",
+            "name": "windows-msvc-release",
+            "displayName": "Visual Studio Build Tools 2022 Release - amd64",
             "configurePreset": "windows-msvc",
-            "configuration": "Debug"
+            "configuration": "Release"
         }
     ]
 }
