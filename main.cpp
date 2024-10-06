@@ -62,8 +62,11 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
         auto timeline_properties = session.GetTimelineProperties();
         auto position = to_millis(timeline_properties.Position());
         auto position_timestamp = to_millis(winrt::clock::to_sys(timeline_properties.LastUpdatedTime()).time_since_epoch());
+        auto now = to_millis(std::chrono::system_clock::now().time_since_epoch());
+        auto position_live = position + (now - position_timestamp);
         auto duration = to_millis(timeline_properties.EndTime() - timeline_properties.StartTime());
         std::cout << "Position: " << position << std::endl;
+        std::cout << "Position (live): " << position_live << std::endl;
         std::cout << "LastUpdatedTime: " << position_timestamp << std::endl;
         std::cout << "EndTime - StartTime (duration): " << duration << std::endl;
         std::cout << "MinSeekTime: " << to_millis(timeline_properties.MinSeekTime()) << std::endl;
