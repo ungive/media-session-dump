@@ -7,6 +7,7 @@
 
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Control;
+using namespace winrt::Windows::Media;
 using namespace std::chrono_literals;
 
 #define INTERVAL 1s
@@ -14,6 +15,7 @@ using namespace std::chrono_literals;
 IAsyncAction observe_async();
 IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManager&);
 std::string represent(winrt::hstring const&);
+std::string represent_playback_type(MediaPlaybackType value);
 
 int main()
 {
@@ -69,6 +71,7 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
         std::cout << "MaxSeekTime - MinSeekTime: " << to_millis(timeline_properties.MaxSeekTime() - timeline_properties.MinSeekTime()) << std::endl;
         std::cout << "TrackNumber: " << properties.TrackNumber() << std::endl;
         std::cout << "AlbumTrackCount: " << properties.AlbumTrackCount() << std::endl;
+        std::cout << "PlaybackType: " << represent_playback_type(properties.PlaybackType().Value()) << std::endl;
         std::cout << std::endl;
     }
     co_return;
@@ -81,4 +84,15 @@ std::string represent(winrt::hstring const& value)
         return "<empty>";
     }
     return str;
+}
+
+std::string represent_playback_type(MediaPlaybackType value)
+{
+    switch (value) {
+    case MediaPlaybackType::Unknown: return "Unknown";
+    case MediaPlaybackType::Music: return "Music";
+    case MediaPlaybackType::Video: return "Video";
+    case MediaPlaybackType::Image: return "Image";
+    default: return "<invalid>";
+    }
 }
