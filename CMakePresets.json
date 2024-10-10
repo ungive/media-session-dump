@@ -8,7 +8,7 @@
     "configurePresets": [
         {
             "name": "windows-msvc",
-            "displayName": "Visual Studio Build Tools 2022 Release - amd64",
+            "displayName": "Visual Studio Build Tools 2022 - amd64",
             "description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
             "generator": "Visual Studio 17 2022",
             "toolset": "host=x64",
@@ -27,6 +27,12 @@
             "displayName": "Visual Studio Build Tools 2022 Release - amd64",
             "configurePreset": "windows-msvc",
             "configuration": "Release"
+        },
+        {
+            "name": "windows-msvc-debug",
+            "displayName": "Visual Studio Build Tools 2022 Debug - amd64",
+            "configurePreset": "windows-msvc",
+            "configuration": "Debug"
         }
     ]
 }
