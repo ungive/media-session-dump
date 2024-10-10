@@ -1,16 +1,34 @@
 #include <iostream>
 #include <chrono>
+#include <memory>
+#include <sstream>
 
 #include <Windows.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Media.Control.h>
+#include <winrt/Windows.Storage.Streams.h>
 
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Control;
 using namespace winrt::Windows::Media;
+using namespace winrt::Windows::Storage::Streams;
 using namespace std::chrono_literals;
 
 #define INTERVAL 1s
+#define THUMBNAIL_MAX_SIZE_BYTES (512*1024*1024)
+
+struct Image
+{
+    std::vector<uint8_t> data;
+    std::string content_type;
+
+    std::string str() const
+    {
+        std::ostringstream oss;
+        oss << this->content_type << " <" << this->data.size() << " bytes>";
+        return oss.str();
+    }
+};
 
 IAsyncAction observe_async();
 IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManager&);
@@ -18,6 +36,8 @@ std::string represent(winrt::hstring const&);
 std::string represent_playback_type(MediaPlaybackType);
 std::string represent_playback_status(GlobalSystemMediaTransportControlsSessionPlaybackStatus);
 bool represent_playing(GlobalSystemMediaTransportControlsSessionPlaybackStatus);
+IAsyncAction load_media_thumbnail(
+    IRandomAccessStreamReference thumbnail, std::shared_ptr<Image>& out);
 
 int main()
 {
@@ -54,6 +74,8 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
                 << winrt::to_string(err.message()) << std::endl;
             continue;
         }
+        std::shared_ptr<Image> image;
+        co_await load_media_thumbnail(properties.Thumbnail(), image);
         auto playback_info = session.GetPlaybackInfo();
         auto playback_status = playback_info.PlaybackStatus();
         auto timeline_properties = session.GetTimelineProperties();
@@ -77,6 +99,7 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
         std::cout << "MaxSeekTime: " << to_millis(timeline_properties.MaxSeekTime()) << std::endl;
         std::cout << "MaxSeekTime - MinSeekTime (duration): " << to_millis(timeline_properties.MaxSeekTime() - timeline_properties.MinSeekTime()) << std::endl;
         std::cout << "PlaybackType: " << represent_playback_type(properties.PlaybackType().Value()) << std::endl;
+        std::cout << "Thumbnail: " << (image ? image->str() : "<empty>") << std::endl;
         std::cout << "TrackNumber: " << properties.TrackNumber() << std::endl;
         std::cout << "AlbumTrackCount: " << properties.AlbumTrackCount() << std::endl;
         std::cout << "Genres: "; for (auto const& genre : properties.Genres()) std::cout << represent(genre) << ", "; std::cout << std::endl;
@@ -126,4 +149,52 @@ bool represent_playing(GlobalSystemMediaTransportControlsSessionPlaybackStatus s
     default:
         return false;
     }
+}
+
+IAsyncAction load_media_thumbnail(
+    IRandomAccessStreamReference thumbnail, std::shared_ptr<Image>& out)
+{
+    if (!thumbnail) {
+        co_return;
+    }
+    IRandomAccessStreamWithContentType stream;
+    try {
+        stream = co_await thumbnail.OpenReadAsync();
+    }
+    catch (winrt::hresult_error const&) {
+        co_return;
+    }
+    auto thumbnail_size{ static_cast<uint32_t>(stream.Size()) };
+    if (thumbnail_size > THUMBNAIL_MAX_SIZE_BYTES) {
+        co_return;
+    }
+    // The content type can contain multiple content types...
+    // This is not documented directly for the ContentType() method.
+    // The exact return values can be found here though:
+    // https://learn.microsoft.com/de-de/windows/win32/wic/jpeg-format-overview
+    // Splitting at the first comma is necessary, to get a single content type.
+    std::istringstream iss(winrt::to_string(stream.ContentType()));
+    std::string content_type;
+    std::getline(iss, content_type, ',');
+
+    IInputStream input_stream{ stream.GetInputStreamAt(0) };
+    DataReader data_reader{ input_stream };
+
+    unsigned int bytes_loaded;
+    try {
+        bytes_loaded = co_await data_reader.LoadAsync(thumbnail_size);
+    }
+    catch (winrt::hresult_error const&) {
+        co_return;
+    }
+    if (bytes_loaded != thumbnail_size) {
+        assert(false);
+        co_return;
+    }
+
+    IBuffer buffer{ data_reader.ReadBuffer(bytes_loaded) };
+    auto result = std::make_shared<Image>();
+    result->data = std::vector<uint8_t>(buffer.data(), buffer.data() + buffer.Length());
+    result->content_type = content_type;
+    out = result;
 }
