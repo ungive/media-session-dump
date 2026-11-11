@@ -79,7 +79,10 @@ IAsyncAction read_sessions_async(
     std::ostringstream out;
 
     if (index > 0) {
-        out << "--------------------------------";
+        out << std::endl;
+        for (std::size_t i = 0; i < 32; i++) {
+            out << "\u2500";
+        }
         out << std::endl;
         out << std::endl;
     }
@@ -87,7 +90,6 @@ IAsyncAction read_sessions_async(
     auto sessions = manager.GetSessions();
     for (std::uint32_t i = 0; i < sessions.Size(); i++) {
         auto session = sessions.GetAt(i);
-        out << "" << (i + 1) << "/" << sessions.Size() << " " << current_timestamp() << std::endl;
 
         GlobalSystemMediaTransportControlsSessionMediaProperties properties{ nullptr };
         try {
@@ -97,6 +99,12 @@ IAsyncAction read_sessions_async(
                 << winrt::to_string(err.message()) << std::endl;
             continue;
         }
+
+        if (i > 0) {
+            out << std::endl;
+        }
+        out << "" << (i + 1) << "/" << sessions.Size() << " " << current_timestamp() << std::endl;
+
         std::shared_ptr<Image> image;
         co_await load_media_thumbnail(properties.Thumbnail(), image);
         auto playback_info = session.GetPlaybackInfo();
