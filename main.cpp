@@ -76,16 +76,18 @@ inline std::chrono::milliseconds to_millis(std::chrono::duration<R, P> value)
 IAsyncAction read_sessions_async(
     std::size_t index, GlobalSystemMediaTransportControlsSessionManager& manager)
 {
+    std::ostringstream out;
+
     if (index > 0) {
-        std::cout << "--------------------------------";
-        std::cout << std::endl;
-        std::cout << std::endl;
+        out << "--------------------------------";
+        out << std::endl;
+        out << std::endl;
     }
 
     auto sessions = manager.GetSessions();
     for (std::uint32_t i = 0; i < sessions.Size(); i++) {
         auto session = sessions.GetAt(i);
-        std::cout << "" << (i + 1) << "/" << sessions.Size() << " " << current_timestamp() << std::endl;
+        out << "" << (i + 1) << "/" << sessions.Size() << " " << current_timestamp() << std::endl;
 
         GlobalSystemMediaTransportControlsSessionMediaProperties properties{ nullptr };
         try {
@@ -108,23 +110,23 @@ IAsyncAction read_sessions_async(
         auto now = to_millis(std::chrono::system_clock::now().time_since_epoch());
         auto position_live = represent_playing(playback_status) ? position + (now - position_timestamp) : position;
         auto duration = to_millis(timeline_properties.EndTime() - timeline_properties.StartTime());
-        std::cout << "AppUserModelId: " << represent(session.SourceAppUserModelId()) << std::endl;
-        std::cout << "Title: " << represent(properties.Title()) << std::endl;
-        std::cout << "Subtitle: " << represent(properties.Subtitle()) << std::endl;
-        std::cout << "Artist: " << represent(properties.Artist()) << std::endl;
-        std::cout << "AlbumTitle: " << represent(properties.AlbumTitle()) << std::endl;
-        std::cout << "AlbumArtist: " << represent(properties.AlbumArtist()) << std::endl;
-        std::cout << "PlaybackStatus: " << represent_playback_status(playback_status) << std::endl;
-        std::cout << "PlaybackRate: " << (playback_rate ? std::to_string(playback_rate.Value()) : "<null>") << std::endl;
-        std::cout << "Position (live): " << position_live << std::endl;
-        std::cout << "Position (fixed): " << position << std::endl;
-        std::cout << "LastUpdatedTime: " << position_timestamp << std::endl;
-        std::cout << "StartTime: " << to_millis(timeline_properties.StartTime()) << std::endl;
-        std::cout << "EndTime: " << to_millis(timeline_properties.EndTime()) << std::endl;
-        std::cout << "EndTime - StartTime (duration): " << duration << std::endl;
-        std::cout << "MinSeekTime: " << to_millis(timeline_properties.MinSeekTime()) << std::endl;
-        std::cout << "MaxSeekTime: " << to_millis(timeline_properties.MaxSeekTime()) << std::endl;
-        std::cout << "MaxSeekTime - MinSeekTime (duration): " << to_millis(timeline_properties.MaxSeekTime() - timeline_properties.MinSeekTime()) << std::endl;
+        out << "AppUserModelId: " << represent(session.SourceAppUserModelId()) << std::endl;
+        out << "Title: " << represent(properties.Title()) << std::endl;
+        out << "Subtitle: " << represent(properties.Subtitle()) << std::endl;
+        out << "Artist: " << represent(properties.Artist()) << std::endl;
+        out << "AlbumTitle: " << represent(properties.AlbumTitle()) << std::endl;
+        out << "AlbumArtist: " << represent(properties.AlbumArtist()) << std::endl;
+        out << "PlaybackStatus: " << represent_playback_status(playback_status) << std::endl;
+        out << "PlaybackRate: " << (playback_rate ? std::to_string(playback_rate.Value()) : "<null>") << std::endl;
+        out << "Position (live): " << position_live << std::endl;
+        out << "Position (fixed): " << position << std::endl;
+        out << "LastUpdatedTime: " << position_timestamp << std::endl;
+        out << "StartTime: " << to_millis(timeline_properties.StartTime()) << std::endl;
+        out << "EndTime: " << to_millis(timeline_properties.EndTime()) << std::endl;
+        out << "EndTime - StartTime (duration): " << duration << std::endl;
+        out << "MinSeekTime: " << to_millis(timeline_properties.MinSeekTime()) << std::endl;
+        out << "MaxSeekTime: " << to_millis(timeline_properties.MaxSeekTime()) << std::endl;
+        out << "MaxSeekTime - MinSeekTime (duration): " << to_millis(timeline_properties.MaxSeekTime() - timeline_properties.MinSeekTime()) << std::endl;
 
         std::vector<std::string> enabled_playback_controls;
         if (controls.IsChannelDownEnabled()) enabled_playback_controls.push_back("ChannelDown");
@@ -142,39 +144,40 @@ IAsyncAction read_sessions_async(
         if (controls.IsRewindEnabled()) enabled_playback_controls.push_back("Rewind");
         if (controls.IsShuffleEnabled()) enabled_playback_controls.push_back("Shuffle");
         if (controls.IsStopEnabled()) enabled_playback_controls.push_back("Stop");
-        std::cout << "PlaybackControls: ";
+        out << "PlaybackControls: ";
         if (enabled_playback_controls.empty()) {
-            std::cout << "<null>";
+            out << "<null>";
         } else {
             for (size_t i = 0; i < enabled_playback_controls.size(); ++i) {
                 if (i > 0) {
-                    std::cout << ", ";
+                    out << ", ";
                 }
-                std::cout << enabled_playback_controls[i];
+                out << enabled_playback_controls[i];
             }
         }
-        std::cout << std::endl;
+        out << std::endl;
 
-        std::cout << "PlaybackType: " << (playback_type ? represent_playback_type(playback_type.Value()) : "<null>") << std::endl;
-        std::cout << "Thumbnail: " << (image ? image->str() : "<null>") << std::endl;
-        std::cout << "TrackNumber: " << properties.TrackNumber() << std::endl;
-        std::cout << "AlbumTrackCount: " << properties.AlbumTrackCount() << std::endl;
+        out << "PlaybackType: " << (playback_type ? represent_playback_type(playback_type.Value()) : "<null>") << std::endl;
+        out << "Thumbnail: " << (image ? image->str() : "<null>") << std::endl;
+        out << "TrackNumber: " << properties.TrackNumber() << std::endl;
+        out << "AlbumTrackCount: " << properties.AlbumTrackCount() << std::endl;
 
-        std::cout << "Genres: ";
+        out << "Genres: ";
         if (properties.Genres().Size() == 0) {
-            std::cout << "<null>";
+            out << "<null>";
         } else {
             for (uint32_t i = 0; i < properties.Genres().Size(); ++i) {
                 if (i > 0) {
-                    std::cout << ", ";
+                    out << ", ";
                 }
-                std::cout << represent(properties.Genres().GetAt(i));
+                out << represent(properties.Genres().GetAt(i));
             }
         }
-        std::cout << std::endl;
-
-        std::cout << std::endl;
+        out << std::endl;
     }
+
+    std::cout << std::move(out).str();
+
     co_return;
 }
 
