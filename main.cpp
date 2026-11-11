@@ -62,8 +62,15 @@ IAsyncAction observe_async()
     auto manager = co_await GlobalSystemMediaTransportControlsSessionManager::RequestAsync();
 
     for (std::size_t i = 0;; i++) {
+        auto start = std::chrono::steady_clock::now();
+
         co_await read_sessions_async(i, manager);
-        co_await winrt::resume_after(INTERVAL);
+
+        auto elapsed = std::chrono::steady_clock::now() - start;
+        if (elapsed < INTERVAL) {
+            co_await winrt::resume_after(
+                std::chrono::duration_cast<winrt::Windows::Foundation::TimeSpan>(INTERVAL - elapsed));
+        }
     }
 }
 
