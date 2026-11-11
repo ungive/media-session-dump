@@ -182,13 +182,14 @@ std::string current_timestamp()
 {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::system_clock::to_time_t(now);
-    std::tm local_time{};
-    localtime_s(&local_time, &time);
+    std::tm utc_time{};
+    gmtime_s(&utc_time, &time);
 
     std::ostringstream oss;
-    oss << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S")
+    oss << std::put_time(&utc_time, "%Y-%m-%dT%H:%M:%S")
         << '.' << std::setfill('0') << std::setw(3)
-        << to_millis(now.time_since_epoch() % 1s).count();
+        << to_millis(now.time_since_epoch() % 1s).count()
+        << 'Z';
 
     return oss.str();
 }
