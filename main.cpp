@@ -38,7 +38,8 @@ struct Image
 };
 
 IAsyncAction observe_async();
-IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManager&);
+IAsyncAction read_sessions_async(
+    std::size_t, GlobalSystemMediaTransportControlsSessionManager&);
 std::string current_timestamp();
 void log_playback_controls(
     GlobalSystemMediaTransportControlsSessionPlaybackControls const& controls);
@@ -60,8 +61,8 @@ IAsyncAction observe_async()
 {
     auto manager = co_await GlobalSystemMediaTransportControlsSessionManager::RequestAsync();
 
-    while (true) {
-        co_await read_sessions_async(manager);
+    for (std::size_t i = 0;; i++) {
+        co_await read_sessions_async(i, manager);
         co_await winrt::resume_after(INTERVAL);
     }
 }
@@ -72,8 +73,15 @@ inline std::chrono::milliseconds to_millis(std::chrono::duration<R, P> value)
     return std::chrono::duration_cast<std::chrono::milliseconds>(value);
 }
 
-IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManager& manager)
+IAsyncAction read_sessions_async(
+    std::size_t index, GlobalSystemMediaTransportControlsSessionManager& manager)
 {
+    if (index > 0) {
+        std::cout << "--------------------------------";
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+
     auto sessions = manager.GetSessions();
     for (std::size_t i = 0; i < sessions.Size(); i++) {
         auto session = sessions.GetAt(i);
