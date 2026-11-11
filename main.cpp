@@ -2,6 +2,7 @@
 #include <chrono>
 #include <memory>
 #include <sstream>
+#include <cstdint>
 
 #include <Windows.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -124,7 +125,7 @@ std::string represent_playback_type(MediaPlaybackType value)
     case MediaPlaybackType::Music: return "Music";
     case MediaPlaybackType::Video: return "Video";
     case MediaPlaybackType::Image: return "Image";
-    default: return "<invalid>";
+    default: return std::to_string(static_cast<std::int32_t>(value));
     }
 }
 
@@ -137,7 +138,7 @@ std::string represent_playback_status(GlobalSystemMediaTransportControlsSessionP
     case GlobalSystemMediaTransportControlsSessionPlaybackStatus::Stopped: return "Stopped";
     case GlobalSystemMediaTransportControlsSessionPlaybackStatus::Changing: return "Changing";
     case GlobalSystemMediaTransportControlsSessionPlaybackStatus::Closed: return "Closed";
-    default: return "<invalid>";
+    default: return std::to_string(static_cast<std::int32_t>(status));
     }
 }
 
