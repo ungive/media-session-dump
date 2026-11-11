@@ -80,9 +80,8 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
         GlobalSystemMediaTransportControlsSessionMediaProperties properties{ nullptr };
         try {
             properties = co_await session.TryGetMediaPropertiesAsync();
-        }
-        catch (winrt::hresult_error const& err) {
-            std::cout << "failed to get media properties: "
+        } catch (winrt::hresult_error const& err) {
+            std::cerr << "Error: Failed to get media properties: "
                 << winrt::to_string(err.message()) << std::endl;
             continue;
         }
