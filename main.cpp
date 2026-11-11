@@ -3,8 +3,14 @@
 #include <memory>
 #include <sstream>
 #include <cstdint>
+#include <iomanip>
+#include <ctime>
+#include <vector>
+#include <cassert>
+#include <string>
 
 #include <Windows.h>
+#include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Media.Control.h>
 #include <winrt/Windows.Storage.Streams.h>
@@ -26,13 +32,16 @@ struct Image
     std::string str() const
     {
         std::ostringstream oss;
-        oss << this->content_type << " <" << this->data.size() << " bytes>";
+        oss << "<" << this->content_type << " " << this->data.size() << " bytes>";
         return oss.str();
     }
 };
 
 IAsyncAction observe_async();
 IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManager&);
+std::string current_timestamp();
+void log_playback_controls(
+    GlobalSystemMediaTransportControlsSessionPlaybackControls const& controls);
 std::string represent(winrt::hstring const&);
 std::string represent_playback_type(MediaPlaybackType);
 std::string represent_playback_status(GlobalSystemMediaTransportControlsSessionPlaybackStatus);
@@ -53,7 +62,7 @@ IAsyncAction observe_async()
 
     while (true) {
         co_await read_sessions_async(manager);
-        co_await INTERVAL;
+        co_await winrt::resume_after(INTERVAL);
     }
 }
 
@@ -66,7 +75,9 @@ inline std::chrono::milliseconds to_millis(std::chrono::duration<R, P> value)
 IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManager& manager)
 {
     for (auto session : manager.GetSessions()) {
-        GlobalSystemMediaTransportControlsSessionMediaProperties properties{nullptr};
+        std::cout << "Timestamp: " << current_timestamp() << std::endl;
+
+        GlobalSystemMediaTransportControlsSessionMediaProperties properties{ nullptr };
         try {
             properties = co_await session.TryGetMediaPropertiesAsync();
         }
@@ -79,7 +90,10 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
         co_await load_media_thumbnail(properties.Thumbnail(), image);
         auto playback_info = session.GetPlaybackInfo();
         auto playback_status = playback_info.PlaybackStatus();
+        auto controls = playback_info.Controls();
         auto timeline_properties = session.GetTimelineProperties();
+        auto playback_rate = playback_info.PlaybackRate();
+        auto playback_type = properties.PlaybackType();
         auto position = to_millis(timeline_properties.Position());
         auto position_timestamp = to_millis(winrt::clock::to_sys(timeline_properties.LastUpdatedTime()).time_since_epoch());
         auto now = to_millis(std::chrono::system_clock::now().time_since_epoch());
@@ -92,28 +106,89 @@ IAsyncAction read_sessions_async(GlobalSystemMediaTransportControlsSessionManage
         std::cout << "AlbumTitle: " << represent(properties.AlbumTitle()) << std::endl;
         std::cout << "AlbumArtist: " << represent(properties.AlbumArtist()) << std::endl;
         std::cout << "PlaybackStatus: " << represent_playback_status(playback_status) << std::endl;
+        std::cout << "PlaybackRate: " << (playback_rate ? std::to_string(playback_rate.Value()) : "<null>") << std::endl;
         std::cout << "Position (live): " << position_live << std::endl;
         std::cout << "Position (fixed): " << position << std::endl;
         std::cout << "LastUpdatedTime: " << position_timestamp << std::endl;
+        std::cout << "StartTime: " << to_millis(timeline_properties.StartTime()) << std::endl;
+        std::cout << "EndTime: " << to_millis(timeline_properties.EndTime()) << std::endl;
         std::cout << "EndTime - StartTime (duration): " << duration << std::endl;
         std::cout << "MinSeekTime: " << to_millis(timeline_properties.MinSeekTime()) << std::endl;
         std::cout << "MaxSeekTime: " << to_millis(timeline_properties.MaxSeekTime()) << std::endl;
         std::cout << "MaxSeekTime - MinSeekTime (duration): " << to_millis(timeline_properties.MaxSeekTime() - timeline_properties.MinSeekTime()) << std::endl;
-        std::cout << "PlaybackType: " << represent_playback_type(properties.PlaybackType().Value()) << std::endl;
-        std::cout << "Thumbnail: " << (image ? image->str() : "<empty>") << std::endl;
+
+        std::vector<std::string> enabled_playback_controls;
+        if (controls.IsChannelDownEnabled()) enabled_playback_controls.push_back("ChannelDown");
+        if (controls.IsChannelUpEnabled()) enabled_playback_controls.push_back("ChannelUp");
+        if (controls.IsFastForwardEnabled()) enabled_playback_controls.push_back("FastForward");
+        if (controls.IsNextEnabled()) enabled_playback_controls.push_back("Next");
+        if (controls.IsPauseEnabled()) enabled_playback_controls.push_back("Pause");
+        if (controls.IsPlaybackPositionEnabled()) enabled_playback_controls.push_back("PlaybackPosition");
+        if (controls.IsPlaybackRateEnabled()) enabled_playback_controls.push_back("PlaybackRate");
+        if (controls.IsPlayEnabled()) enabled_playback_controls.push_back("Play");
+        if (controls.IsPlayPauseToggleEnabled()) enabled_playback_controls.push_back("PlayPauseToggle");
+        if (controls.IsPreviousEnabled()) enabled_playback_controls.push_back("Previous");
+        if (controls.IsRecordEnabled()) enabled_playback_controls.push_back("Record");
+        if (controls.IsRepeatEnabled()) enabled_playback_controls.push_back("Repeat");
+        if (controls.IsRewindEnabled()) enabled_playback_controls.push_back("Rewind");
+        if (controls.IsShuffleEnabled()) enabled_playback_controls.push_back("Shuffle");
+        if (controls.IsStopEnabled()) enabled_playback_controls.push_back("Stop");
+        std::cout << "PlaybackControls: ";
+        if (enabled_playback_controls.empty()) {
+            std::cout << "<null>";
+        } else {
+            for (size_t i = 0; i < enabled_playback_controls.size(); ++i) {
+                if (i > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << enabled_playback_controls[i];
+            }
+        }
+        std::cout << std::endl;
+
+        std::cout << "PlaybackType: " << (playback_type ? represent_playback_type(playback_type.Value()) : "<null>") << std::endl;
+        std::cout << "Thumbnail: " << (image ? image->str() : "<null>") << std::endl;
         std::cout << "TrackNumber: " << properties.TrackNumber() << std::endl;
         std::cout << "AlbumTrackCount: " << properties.AlbumTrackCount() << std::endl;
-        std::cout << "Genres: "; for (auto const& genre : properties.Genres()) std::cout << represent(genre) << ", "; std::cout << std::endl;
+
+        std::cout << "Genres: ";
+        if (properties.Genres().Size() == 0) {
+            std::cout << "<null>";
+        } else {
+            for (uint32_t i = 0; i < properties.Genres().Size(); ++i) {
+                if (i > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << represent(properties.Genres().GetAt(i));
+            }
+        }
+        std::cout << std::endl;
+
         std::cout << std::endl;
     }
     co_return;
+}
+
+std::string current_timestamp()
+{
+    auto now = std::chrono::system_clock::now();
+    auto time = std::chrono::system_clock::to_time_t(now);
+    std::tm local_time{};
+    localtime_s(&local_time, &time);
+
+    std::ostringstream oss;
+    oss << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S")
+        << '.' << std::setfill('0') << std::setw(3)
+        << to_millis(now.time_since_epoch() % 1s).count();
+
+    return oss.str();
 }
 
 std::string represent(winrt::hstring const& value)
 {
     std::string str{ winrt::to_string(value) };
     if (str.empty()) {
-        return "<empty>";
+        return "<null>";
     }
     return str;
 }
