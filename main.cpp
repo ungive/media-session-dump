@@ -83,7 +83,7 @@ IAsyncAction read_sessions_async(
     }
 
     auto sessions = manager.GetSessions();
-    for (std::size_t i = 0; i < sessions.Size(); i++) {
+    for (std::uint32_t i = 0; i < sessions.Size(); i++) {
         auto session = sessions.GetAt(i);
         std::cout << "" << (i + 1) << "/" << sessions.Size() << " " << current_timestamp() << std::endl;
 
