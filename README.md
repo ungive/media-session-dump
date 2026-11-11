@@ -2,7 +2,7 @@
 
 Logs all metadata that applications report to your system via System Media Transport Controls (SMTC).
 
-For downloads visit the Releases page: https://github.com/ungive/media-session-dump/releases and download `msd.exe`.
+For downloads visit https://github.com/ungive/media-session-dump/releases and download `msd.exe`.
 
 ## Screenshot
 
